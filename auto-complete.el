@@ -323,6 +323,9 @@ a prefix doesn't contain any upper case letters."
                  (const :tag "Window Ratio Limit" 0.5))
   :group 'auto-complete)
 
+(defcustom ac-number-candidates-p nil
+  "prefix candidates with their number in the popup for easier `ac-complete-select-%d'")
+
 (defface ac-completion-face
   '((t (:foreground "darkgray" :underline t)))
   "Face for inline completion"
@@ -430,6 +433,8 @@ If there is no common part, this will be nil.")
 
 (defvar ac-mode-map (make-sparse-keymap)
   "Auto-complete mode map. It is also used for trigger key command. See also `ac-trigger-key'.")
+
+
 
 (defvar ac-completing-map
   (let ((map (make-sparse-keymap)))
@@ -1138,7 +1143,16 @@ You can not use it in source definition like (prefix . `NAME')."
     (ac-deactivate-completing-map))
   (unless ac-disable-inline
     (ac-inline-update))
-  (popup-set-list ac-menu ac-candidates)
+  
+  (popup-set-list
+   ac-menu 
+   (if (not ac-number-candidates-p)
+       ac-candidates
+     (loop for cand in ac-candidates
+	   for i from 1
+	   collect (format "%d. %s" i cand))))
+      
+  
   (if (and (not ac-fuzzy-enable)
            (<= (length ac-candidates) ac-candidate-menu-min))
       (popup-hide ac-menu)
@@ -1244,7 +1258,11 @@ that have been made before in this function.  When `buffer-undo-list' is
           (setq buffer-undo-list
                 (nthcdr 2 buffer-undo-list)))
       (delete-region ac-point (ac-extend-region-to-delete string)))
-    (insert (substring-no-properties string))
+    (insert (substring-no-properties
+	     (if (not ac-number-candidates-p)
+		 string
+	       (substring string 3))));;only works for single digit
+    
     ;; Sometimes, possible when omni-completion used, (insert) added
     ;; to buffer-undo-list strange record about position changes.
     ;; Delete it here:
