@@ -436,6 +436,11 @@ If there is no common part, this will be nil.")
 
 
 
+(defvar ac-complete-select-nth-kdb-fun
+  (lambda (i)
+    (read-kbd-macro (format "M-%s" i)))
+  "given i, decide what key should be mapped to `ac-complete-selection-%d'")
+
 (defvar ac-completing-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\t" 'ac-expand)
@@ -459,16 +464,18 @@ If there is no common part, this will be nil.")
     (define-key map "\C-\M-p" 'ac-quick-help-scroll-up)
 
     (dotimes (i 9)
-      (let ((symbol (intern (format "ac-complete-select-%d" (1+ i)))))
+      (let ((symbol (intern (format "ac-complete-select-%d" (1+ i))))
+	    (key (funcall ac-complete-select-nth-kdb-fun (1+ i))))
         (fset symbol
               `(lambda ()
                  (interactive)
                  (when (and (ac-menu-live-p) (popup-select ac-menu ,i))
                    (ac-complete))))
-        (define-key map (read-kbd-macro (format "M-%s" (1+ i))) symbol)))
+        (define-key map key symbol)))
 
     map)
   "Keymap for completion.")
+
 (defvaralias 'ac-complete-mode-map 'ac-completing-map)
 
 (defvar ac-menu-map
